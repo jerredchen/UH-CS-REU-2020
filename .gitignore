@@ -1,0 +1,7 @@
+*.txt
+*.ipynb
+*.csv
+*.swp
+REU.code-workspace
+test.py
+strict_test.py
