@@ -34,7 +34,7 @@ def on_press(key):
 def on_release(key):
     global command
     global df_user
-    if "exit" in command and key == Key.enter:
+    if ("exit" in command or "logout" in command) and key == Key.enter:
         return False
     if key == Key.enter or key == Key.ctrl:
         df_user = df_user.append({'Time': time.time() - start_time, 'Command': command}, ignore_index=True)
