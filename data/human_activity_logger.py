@@ -50,7 +50,7 @@ parser = argparse.ArgumentParser(description="Logs the activity of a human user 
 # parser.add_argument("expNum", type=int, help="The experiment number being performed.")
 parser.add_argument("client", help="The IP address and location of the client, in the following format: 0.0.0.0_Tokyo")
 parser.add_argument("hops", type=int, help="The number of hops that the connection has to the server.")
-parser.add_argument("--ih", "--inter", type=list, help="If a hacker, the intermediate hosts that are in chain.")
+parser.add_argument("--ih", "--inter", help="If a hacker, the intermediate hosts that are in chain.")
 args = parser.parse_args()
 # exp = args.expNum
 client = args.client
