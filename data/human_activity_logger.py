@@ -10,8 +10,13 @@ df_log = pandas.DataFrame(columns=['Date/Local Time', 'Experiment Number', 'Clie
     'Test Duration', 'Typing Speed (char/s)', 'Hops', 'Intermediate Hosts (Client->Server)', 'Filename'])
 df_user = pandas.DataFrame(columns=['Time', 'Command'])
 
+start_count = 0
 def on_press_start(key):
-    print("Please press the Esc button so the recording will start.")
+    global start_count
+    start_count += 1
+    if start_count == 2:
+        print("Please press the Esc button so the recording will start.")
+        start_count = 0
 
 def on_release_start(key):
     if key == Key.esc:
@@ -42,16 +47,20 @@ def on_release(key):
 
 # Collect events until released
 parser = argparse.ArgumentParser(description="Logs the activity of a human user for experimentation.")
-parser.add_argument("expNum", type=int, help="The experiment number being performed.")
+# parser.add_argument("expNum", type=int, help="The experiment number being performed.")
 parser.add_argument("client", help="The IP address and location of the client, in the following format: 0.0.0.0_Tokyo")
 parser.add_argument("hops", type=int, help="The number of hops that the connection has to the server.")
 parser.add_argument("--ih", "--inter", type=list, help="If a hacker, the intermediate hosts that are in chain.")
 args = parser.parse_args()
-exp = args.expNum
+# exp = args.expNum
 client = args.client
 hops = args.hops
 ih = args.ih
 
+with open("count.txt", 'r') as f:
+    exp = int(f.read()) + 1
+with open("count.txt", 'w') as f:
+    f.write(str(exp))
 print("After you have logged into the server, please press the Esc button so the recording will start.")
 with Listener(on_press=on_press_start,
             on_release=on_release_start) as listener:
