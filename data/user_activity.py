@@ -25,8 +25,8 @@ class Node():
 
 class DataFrame():
     def __init__(self):
-        self.df = pandas.DataFrame(columns=['Date/Local Time', 'Experiment Number', 'Client IP/Location',
-            'Server IP/Location', 'Test Duration', 'Typing Speed (char/s)', 'Hops', 'Intermediate Hosts (Client->Server)', 'Filename'])
+        self.df = pandas.DataFrame(columns=['Date/Local Time', 'Experiment Number', 'IP/Location(s)',
+            'Test Duration', 'Avg Typing Speed (char/s)', 'Hops', 'Filename'])
         self.lock = threading.Lock()
     def add(self, log):
         with self.lock():
@@ -192,10 +192,18 @@ class NormalUser():
         elapsed = time.time() - start_duration
         print(f"Normal User at Thread {self.count} is exiting. Duration: {elapsed} s")
         client = ip_location[self.count + 1]
-        df_user.to_csv(f"exp{exp}_{client.replace('.','-')}.csv", index=False)
+        filename = f"exp{exp}_{client.replace('.','-')}_1hop.csv"
+        df_user.to_csv(filename, index=False)
         log = [
-            str(datetime.datetime.now())
+            str(datetime.datetime.now()),
+            exp,
+            client,
+            elapsed,
+            1/(0.2*self.typingSpeed),
+            1,
+            filename
         ]
+        df.add(log)
 
 class HackerUser():
     def __init__(self, server, count, home):
@@ -247,7 +255,18 @@ class HackerUser():
         elapsed = time.time() - start_time
         print(f"Hacker at Thread {self.count} is exiting. Duration: {elapsed} s")
         client = ip_location[self.count + 1]
-        df_user.to_csv(f"exp{exp}_{client.replace('.','-')}.csv", index=False)
+        filename = f"exp{exp}_{client.replace('.','-')[:client.find(',')]}_3hop.csv"
+        df_user.to_csv(filename, index=False)
+        log = [
+            str(datetime.datetime.now()),
+            exp,
+            client,
+            elapsed,
+            1/(0.2*self.typingSpeed),
+            3,
+            filename
+        ]
+        df.add(log)
 
 
 if __name__ == "__main__":
@@ -262,7 +281,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     server = args.server
     totalUsers = args.totalUsers
-    hacker = args.hacker
+    hacker = args.hk
+    repeat = args.r
 
     ML = [Node('ML1', files=['samford']), Node('ML2'), Node('ML3', files=['traffic_analysis'])]
     JC = [Node('JC1', files=['gatech']), Node('JC2',files=['robotics']), Node('JC3',files=['anomaly'])]
@@ -272,17 +292,20 @@ if __name__ == "__main__":
     currUser = UserNum()
     typeCommand = TypeCommand()
     df = DataFrame()
-    ip_location = []
     with open("ip_location.txt") as f:
-        line = f.readline()
-        while (line != '\n'):
-            ip_location.append(line)
+        ip_location = f.readlines()
     with open("count.txt") as f:
         exp = int(f.read())
     f.close()
     with open("count.txt", 'w') as f:
         f.write(exp + 1)
     f.close()
+    print("Place your mouse near the top right corner of the screeen.")
+    # Wait to place mouse cursor in correct position
+    time.sleep(5)
+    keyboard.type("./pcap.sh")
+    mouse.move(-1650, 0)
+    mouse.click(Button.left)
     with futures.ThreadPoolExecutor(max_workers=totalUsers) as ex:
         for i in range(0, totalUsers):
             if i == hacker:
@@ -290,3 +313,11 @@ if __name__ == "__main__":
             else:
                 ex.submit(NormalUser(server, i, home).launch, currUser, typeCommand)
             time.sleep(random.random() * 3)
+    df.to_csv()
+    mouse.move(1650, 0)
+    time.sleep(1)
+    mouse.click(Button.left)
+    keyboard.press(Key.ctrl)
+    keyboard.press('c')
+    keyboard.release('c')
+    keyboard.release(Key.ctrl)
