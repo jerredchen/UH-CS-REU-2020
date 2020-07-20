@@ -9,7 +9,6 @@ import Xlib.threaded
 from concurrent import futures
 import pandas
 import datetime
-
 """
 Creates several threads of normal users and/or attacking users to simulate concurrent user activity.
 
@@ -32,7 +31,7 @@ class DataFrame():
         with self.lock:
             self.df = self.df.append(log, ignore_index=True)
     def to_csv(self):
-        self.df = self.df.drop_duplicates(subset='Date/Local Time', keep=False, inplace=True)
+        self.df.drop_duplicates(subset=['Date/Local Time'], keep='first', inplace=True)
         if os.path.exists("user_activity_log.csv"):
             self.df.to_csv("user_activity_log.csv", mode='a', index=False, header=False)
         else:
@@ -137,7 +136,7 @@ class NormalUser():
             start = time.time()
             end = 0
             typeDuration = (15 * random.random()) + 10
-            while (end < start + typeDuration):
+            while (end < start + typeDuration and time.time() - start_duration <= 100):
                 command = self.commands[random.randrange(0, len(self.commands))]
                 # print(f"Normal User as Thread{self.count}: " + command)
                 if command == 'cd':
@@ -273,11 +272,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate several normal and/or attacking users.")
     # parser.add_argument("server", type=str, help="(str) The location of the connected server (e.g. 'uh' for UH Sever, 'frankfurt' for Frankfurt AWS)")
     parser.add_argument("--t", type=int, help="(int) The total number of users connected to the server.")
-    parser.add_argument("--r", "--repeat", type=int, help="Choose how many times to repeat")
-    parser.add_argument("--c", "--connection")
+    parser.add_argument("--r", "--repeat", type=int, help="Choose how many times to repeat.")
+    parser.add_argument("--c", "--connection", help="Establish the master/slave system by inputting 'master' or 'slave'.")
     args = parser.parse_args()
     # server = args.server
     totalUsers = args.t
+    connection = args.c
+    if connection and connection != "master" and connection != "slave":
+        raise ValueError("Did not give 'master' or 'slave' input.")
     hacker = None
     hacker_hops = None
     repeat = args.r
@@ -293,6 +295,8 @@ if __name__ == "__main__":
     typeCommand = TypeCommand()
     df = DataFrame()
     for rep in range(1, repeat+1):
+        if connection:
+            start_clock = time.time()
         currUser.val = 0
         with open('ip_location.txt') as f:
             ip_location = f.readlines()
@@ -329,16 +333,19 @@ if __name__ == "__main__":
                 keyboard.release(Key.tab)
                 keyboard.release(Key.ctrl)
         # Moves mouse to right side of screen to start tshark command
-        mouse.move(1650, 0)
-        time.sleep(0.5)
-        mouse.click(Button.left)
-        time.sleep(1)
-        keyboard.type("./pcap.sh")
-        keyboard.press(Key.enter)
-        keyboard.release(Key.enter)
-        mouse.move(-1650, 0)
-        mouse.click(Button.left, count=4)
-        time.sleep(1.5)
+        if not connection or connection == "master":
+            mouse.move(1650, 0)
+            time.sleep(0.5)
+            mouse.click(Button.left)
+            time.sleep(1)
+            keyboard.type("./pcap.sh")
+            keyboard.press(Key.enter)
+            keyboard.release(Key.enter)
+            mouse.move(-1650, 0)
+            mouse.click(Button.left, count=4)
+            time.sleep(1.5)
+        elif connection == "slave":
+            time.sleep(1.8)
         # Generates simulated users
         with futures.ThreadPoolExecutor(max_workers=totalUsers) as ex:
             for i in range(totalUsers):
@@ -349,16 +356,19 @@ if __name__ == "__main__":
                 time.sleep(3*random.random()+0.2)
         print(f"Experiment {exp} has ended.")
         df.to_csv()
-        mouse.move(1650, 0)
-        mouse.click(Button.left)
-        time.sleep(1)
-        keyboard.press(Key.ctrl)
-        keyboard.press('c')
-        keyboard.release('c')
-        keyboard.release(Key.ctrl)
+        if not connection or connection == "master":
+            mouse.move(1650, 0)
+            mouse.click(Button.left)
+            time.sleep(1)
+            keyboard.press(Key.ctrl)
+            keyboard.press('c')
+            keyboard.release('c')
+            keyboard.release(Key.ctrl)
+            mouse.move(-1650, 0)
+            mouse.click(Button.left)
+        elif connection == "slave":
+            time.sleep(1.2)
         # Exit out of all of the terminal windows
-        mouse.move(-1650, 0)
-        mouse.click(Button.left)
         time.sleep(1)
         if rep % 3 == 0 or rep == repeat:
             for i in range(totalUsers):
@@ -397,7 +407,7 @@ if __name__ == "__main__":
                             host = foreign[random.randrange(0, len(foreign))]
                             fw.write(host)
                             foreign.remove(host)
-            elif rep % 3 == 0:
+            elif rep % 3 == 0 and connection != "slave":
                 rand = random.randint(totalUsers//2,2*totalUsers//3)
                 usa_count = random.sample(range(1, 5), rand)
                 with open("ip_location_list.txt") as fr:
@@ -406,9 +416,9 @@ if __name__ == "__main__":
                         for i in usa_count:
                             fw.write(ip_location_list[i])
                         foreign = ip_location_list[5:]
-                        hacker = random.randrange(totalUsers - rand)
+                        hacknum = random.randrange(totalUsers - rand)
                         for i in range(totalUsers - rand):
-                            if i == hacker:
+                            if i == hacknum:
                                 hackerstr = ""
                                 for j in range(3):
                                     host_h = foreign[random.randrange(0, len(foreign))]
@@ -423,4 +433,8 @@ if __name__ == "__main__":
                                 host = foreign[random.randrange(0, len(foreign))]
                                 foreign.remove(host)
                             fw.write(host)
-        time.sleep(2)
+        if connection:
+            while time.time() - start_clock < 150:
+                pass
+        else:
+            time.sleep(2)
