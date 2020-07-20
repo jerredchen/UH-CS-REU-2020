@@ -5,7 +5,7 @@
 *.pcap
 *.png
 REU.code-workspace
-test.py
+test*.py
 strict_test.py
 normal_user.py
 human_activity_logger.py
