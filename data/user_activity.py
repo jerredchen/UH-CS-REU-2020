@@ -31,9 +31,11 @@ class DataFrame():
         with self.lock:
             self.df = self.df.append(log, ignore_index=True)
     def to_csv(self):
-        self.df.drop_duplicates(subset=['Date/Local Time'], keep='first', inplace=True)
         if os.path.exists("user_activity_log.csv"):
-            self.df.to_csv("user_activity_log.csv", mode='a', index=False, header=False)
+            old_df = pandas.read_csv("user_activity_log.csv")
+            result = pandas.concat([old_df, self.df], ignore_index=True)
+            result = result.drop_duplicates(subset=["Date/Local Time"], ignore_index=True)
+            result.to_csv("user_activity_log.csv", index=False)
         else:
             self.df.to_csv("user_activity_log.csv", index=False)
 
@@ -113,14 +115,20 @@ class NormalUser():
         self.server = server.lower()
         self.count = count
         self.commands = ['df', 'ls', 'lsblk', 'lscpu', 'mount', 'pwd', 'history', 'ss', f'mkdir Thread{self.count}', 
-            'cal', 'cd', 'cd ..', 'nano', 'ls', 'cd', 'cd ..', 'pwd', f'mkdir Thread{self.count}', 'cat', 'cat']
-        self.typingSpeed = (0.40 * random.random()) + 0.30
+            'cal', 'cd', 'cd ..', 'nano', 'pwd', f'mkdir Thread{self.count}', 'echo this is a random statement', 
+            'echo this long statement is to generate a lot of data packets', 'history', 'ss', 'lsblk']
+        self.typingSpeed = (0.20 * random.random()) + 0.30
         self.tree = [home]
 
     def launch(self, currUser, typeCommand):
+        """
+        Here is an edit to make the normal user have almost no gap in between commands. I edited the the pauses 
+        for the normal user to be as close to zero as possible.
+        """
         global ip_location
         global exp
         global df
+        global totalUsers
         df_user = pandas.DataFrame(columns=['Time', 'Command'])
         # Log into the server through SSH
         time.sleep(2)
@@ -128,16 +136,16 @@ class NormalUser():
             typeCommand.UHlogin(currUser, self.count, self.typingSpeed)
         else:
             typeCommand.type(f"ssh {self.server}", currUser, self.count, self.typingSpeed)
-        time.sleep(3)
+        time.sleep((totalUsers - self.count) + 2)
         prev_commands = []
         start_duration = time.time()
-        typeTimes = random.randint(2, 3)
+        typeTimes = 3
         for i in range(typeTimes):
             start = time.time()
             end = 0
-            typeDuration = (15 * random.random()) + 10
-            while (end < start + typeDuration and time.time() - start_duration <= 100):
-                command = self.commands[random.randrange(0, len(self.commands))]
+            typeDuration = (7.5 * random.random()) + 17.5
+            while (end < start + typeDuration and time.time() - start_duration <= 75):
+                command = self.commands[random.randrange(len(self.commands))]
                 # print(f"Normal User as Thread{self.count}: " + command)
                 if command == 'cd':
                     df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : 'ls'}, ignore_index=True)
@@ -162,7 +170,7 @@ class NormalUser():
                         continue
                     file = currDirect.files[random.randrange(0, len(currDirect.files))]
                     command = f'cat {file}'
-                if command in prev_commands or (command == "nano" and time.time() - start_duration >= 75):
+                if command in prev_commands or (command == "nano" and time.time() - start_duration >= 70):
                     continue
                 current_time = time.time() - start_duration
                 nanoKey = typeCommand.type(command, currUser, self.count, self.typingSpeed)
@@ -174,12 +182,14 @@ class NormalUser():
                     time.sleep(2 * random.random() + 1)
                     df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : f'rmdir Thread{self.count}'}, ignore_index=True)
                     typeCommand.type(f'rmdir Thread{self.count}', currUser, self.count, self.typingSpeed)
-                time.sleep(3 * random.betavariate(3, 7) + 0.7)
+                # time.sleep(3 * random.betavariate(3, 7) + 0.7)
+                # time.sleep(random.betavariate(3, 7))
                 prev_commands.append(command)
                 if len(prev_commands) > 1:
                     prev_commands.pop(0)
                 end = time.time()
-            time.sleep(4 * random.random() + 1.5)
+            # time.sleep(4 * random.random() + 1.5)
+            time.sleep(0.25)
         df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : 'logout'}, ignore_index=True)
         typeCommand.type("logout", currUser, self.count, self.typingSpeed)
         elapsed = time.time() - start_duration
@@ -203,13 +213,20 @@ class HackerUser():
     def __init__(self, server, count, home):
         self.server = server.lower()
         self.count = count
-        self.typingSpeed = (0.40 * random.random()) + 0.30
+        self.typingSpeed = (0.20 * random.random()) + 0.30
+        self.commands = ['df', 'lsblk', 'lscpu', 'mount', 'pwd', 'history', 'ss', 'cal', 'nano', 'pwd', 'history', 'ss', 'lscpu',
+            "echo this is a random command that does not mean anything", "echo this is only to generate as many data packets as possible"]
         self.tree = [home]
         self.visited = set()
     def launch(self, currUser, typeCommand):
+        """
+        Here is an edit to make the hacker have almost no gap in between commands. I commented out the the pauses 
+        for the hacker and added some other longer commands to enter as well.
+        """
         global ip_location
         global exp
         global df
+        global totalUsers
         df_user = pandas.DataFrame(columns=["Time", "Command"])
         # Log into the server through SSH
         time.sleep(2)
@@ -217,9 +234,9 @@ class HackerUser():
             typeCommand.UHlogin(currUser, self.count, self.typingSpeed)
         else:
             typeCommand.type(f"ssh {self.server}", currUser, self.count, self.typingSpeed)
-        time.sleep(4)
+        time.sleep((totalUsers - self.count) + 2)
         start_duration = time.time()
-        total_duration = 40 * random.random() + 60
+        total_duration = 20 * random.random() + 55
         while len(self.tree) != 0 and time.time() - start_duration <= total_duration:
             df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : 'ls'}, ignore_index=True)
             # print(f"Hacker at Thread {self.count}: ls")
@@ -228,9 +245,10 @@ class HackerUser():
             if currDirect not in self.visited:
                 for file in currDirect.files:
                     df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : f'cat {file}'}, ignore_index=True)
-                    print(f"Hacker at Thread {self.count}: cat {file}")
+                    # print(f"Hacker at Thread {self.count}: cat {file}")
                     typeCommand.type(f"cat {file}", currUser, self.count, self.typingSpeed)
-                    time.sleep(random.random() + 0.5)
+                    # time.sleep(random.random() + 0.5)
+                    time.sleep(0.2)
                 self.visited.add(currDirect)
             for sub in currDirect.subf:
                 if sub not in self.visited:
@@ -245,7 +263,16 @@ class HackerUser():
                 df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : f"cd {self.tree[len(self.tree) - 1].name}"}, ignore_index=True)
                 # print(f"Hacker at Thread {self.count}: cd {self.tree[len(self.tree)-1].name}")
                 typeCommand.type(f"cd {self.tree[len(self.tree) - 1].name}", currUser, self.count, self.typingSpeed)
-            time.sleep(random.random() + 0.5)
+            # time.sleep(random.random() + 0.1)
+            time.sleep(0.2)
+            # This is newly added to the hacker
+            command = self.commands[random.randrange(len(self.commands))]
+            current_time = time.time() - start_duration
+            nanoKey = typeCommand.type(command, currUser, self.count, self.typingSpeed)
+            if nanoKey:
+                df_user = df_user.append({"Time" : current_time, "Command" : "nano: " + nanoKey}, ignore_index=True)
+            else:
+                df_user = df_user.append({"Time" : current_time, "Command" : command}, ignore_index=True)
         df_user = df_user.append({"Time" : time.time() - start_duration, "Command" : "logout"}, ignore_index=True)
         typeCommand.type("logout", currUser, self.count, self.typingSpeed)
         elapsed = time.time() - start_duration
@@ -316,7 +343,7 @@ if __name__ == "__main__":
         mouse.click(Button.left)
         time.sleep(1)
         # SSH into all of the respective client terminal windows
-        if rep % 3 == 1:
+        if rep % 3 == 1 or rep == 1:
             for i in range(totalUsers):
                 clients = ip_location[i].split(',')
                 if len(clients) > 1:
@@ -370,7 +397,7 @@ if __name__ == "__main__":
             time.sleep(1.2)
         # Exit out of all of the terminal windows
         time.sleep(1)
-        if rep % 3 == 0 or rep == repeat:
+        if exp % 3 == 0 or rep == repeat:
             for i in range(totalUsers):
                 if i == hacker:
                     for j in range(2):
@@ -394,7 +421,8 @@ if __name__ == "__main__":
                 keyboard.release(Key.tab)
                 keyboard.release(Key.ctrl)  
         if repeat > 1:
-            if rep % 9 == 0:
+            if exp % 9 == 0:
+                hacker = None
                 rand = random.randint(totalUsers//2,2*totalUsers//3)
                 usa_count = random.sample(range(1, 5), rand)
                 with open("ip_location_list.txt") as fr:
@@ -407,7 +435,7 @@ if __name__ == "__main__":
                             host = foreign[random.randrange(0, len(foreign))]
                             fw.write(host)
                             foreign.remove(host)
-            elif rep % 3 == 0 and connection != "slave":
+            elif exp % 3 == 0 and connection != "slave":
                 rand = random.randint(totalUsers//2,2*totalUsers//3)
                 usa_count = random.sample(range(1, 5), rand)
                 with open("ip_location_list.txt") as fr:
@@ -434,7 +462,6 @@ if __name__ == "__main__":
                                 foreign.remove(host)
                             fw.write(host)
         if connection:
-            while time.time() - start_clock < 150:
-                pass
+            time.sleep(170 - (time.time() - start_clock))
         else:
-            time.sleep(2)
+            time.sleep(10)
