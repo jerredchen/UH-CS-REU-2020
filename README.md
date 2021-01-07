@@ -13,4 +13,14 @@ A vast majority of everyday users will create a single, "1-hop connection" to a 
 
 The experiments performed for this research required several people on 1-hop connections to serve as a normal, everyday user connecting to a single server while one person on a 3-hop connection to serve as a stepping-stone intruder. Data analysis would be performed on the differences of times for network packets between the server and respective client servers. The servers were deployed in different locations globally using AWS.
 
-However, it is infeasible to perform machine learning techniques on a few dozen collected experiments using human users. 
+However, it is infeasible to perform machine learning techniques on a few dozen collected experiments using human users. Created a simulated user program would allow for automating the experimentation process and using simulated users on a single computer instead of gathering data from several human users connected to the server.
+
+
+
+Features:
+- Multithreading is implemented for each user to reside on an individual thread. This allows the typing among users to occur as simultaneous as possible.
+- To switch between the simultaneous users typing, the Linux terminal app [Terminator](https://gnometerminator.blogspot.com/p/introduction.html) is used with the help of a threading lock. Each user types on a separate terminal using Terminator.
+  - After a respective user thread reaches the lock and is able to unlock it, the user calculates which terminal is currently being used and how to get to its respective terminal from the current terminal.
+- A list of Linux commands are randomly typed by each user as well as some basic file traversal. These commands are used to generate network packets that will be used in analysis.
+- The gaps between each typed character and the pauses between each typed command were modelled after human typing data, which was collected from the previous experiments. The gaps for the simulated users were then sampled from probability distributions of human typing.
+- A log is created using Pandas with the location of the host(s), IP addresses, duration of the typing session (varies randomly between 60-90 seconds), and a list of all commands typed out.
