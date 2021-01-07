@@ -18,6 +18,7 @@ The experiments performed for this research required several people on 1-hop con
 However, it is infeasible to perform machine learning techniques on a few dozen collected experiments using human users. Created a simulated user program would allow for automating the experimentation process and using simulated users on a single computer instead of gathering data from several human users connected to the server.
 
 ![](https://github.com/jerredchen/UH-CS-REU-2020/blob/master/simulated-users.gif)
+
 (Here is link of video for better quality: https://youtu.be/2831js2RWKY?t=45)
 
 Features:
