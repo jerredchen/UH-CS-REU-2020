@@ -19,7 +19,7 @@ However, it is infeasible to perform machine learning techniques on a few dozen 
 
 ![](https://github.com/jerredchen/UH-CS-REU-2020/blob/master/simulated-users.gif)
 
-(Here is link of video for better quality: https://youtu.be/2831js2RWKY?t=45)
+(Link of video for better quality: https://youtu.be/2831js2RWKY?t=45)
 
 Features:
 - Multithreading is implemented for each user to reside on an individual thread. This allows the typing among users to occur as simultaneous as possible.
