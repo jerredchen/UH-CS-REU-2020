@@ -15,7 +15,9 @@ A vast majority of everyday users will create a single, "1-hop connection" to a 
 
 The experiments performed for this research required several people on 1-hop connections to serve as a normal, everyday user connecting to a single server while one person on a 3-hop connection to serve as a stepping-stone intruder. Data analysis would be performed on the differences of times for network packets between the server and respective client servers. The servers were deployed in different locations globally using AWS.
 
-However, it is infeasible to perform machine learning techniques on a few dozen collected experiments using human users. Created a simulated user program would allow for automating the experimentation process and using simulated users on a single computer instead of gathering data from several human users connected to the server.
+However, it is infeasible to perform machine learning techniques on a few dozen collected experiments using human users. Created a simulated user program would allow for automating the experimentation process and using simulated users on a single computer instead of gathering data from several human users connected to the server. The following demonstrate the simulated typing prototype and the simulated user final product for automated experiments.
+
+![](https://github.com/jerredchen/UH-CS-REU-2020/blob/master/simulated-prototype.gif)
 
 ![](https://github.com/jerredchen/UH-CS-REU-2020/blob/master/simulated-users.gif)
 
